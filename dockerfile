@@ -5,8 +5,7 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Install git
-RUN apt-get update && apt-get install -y git
-
+RUN apt-get update && apt-get install -y git && apt-get install ffmpeg libsm6 libxext6  -y
 
 # Copy the requirements file into the container
 COPY requirements.txt requirements.txt
