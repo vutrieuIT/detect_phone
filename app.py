@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS, cross_origin 
 from ultralytics import YOLO
 from waitress import serve
 import os
@@ -6,11 +7,12 @@ import os
 class App:
     def __init__(self):
         self.app = Flask(__name__)
+        CORS(self.app)
         self.model = YOLO("./phone_detectv2.pt")
-        self.app.add_url_rule('/api', view_func=self.api, methods=['GET'])
+        self.app.add_url_rule('/predict/heathcheck', view_func=self.api, methods=['GET'])
         self.app.add_url_rule('/predict', view_func=self.predict, methods=['POST'])
-        self.app.add_url_rule('/image', view_func=self.get_image_predict, methods=['GET'])
-        self.app.add_url_rule('/results', view_func=self.get_results, methods=['GET'])
+        self.app.add_url_rule('/predict/image', view_func=self.get_image_predict, methods=['GET'])
+        self.app.add_url_rule('/predict/result', view_func=self.get_results, methods=['GET'])
 
     def api(self):
         return jsonify({"message": "Hello World!"})
