@@ -1,5 +1,10 @@
 pipeline {
     agent any
+    environment {
+        DOCKER_REGISTRY = 'trieuvu'
+        IMAGE_NAME = 'predict'
+        IMAGE_TAG = 'new'
+    }
     stages {
         stage('Clone') {
             steps {
