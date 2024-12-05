@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, send_file
-from flask_cors import CORS, cross_origin 
+from flask_cors import CORS, cross_origin
 from ultralytics import YOLO
 from waitress import serve
 import os
@@ -32,29 +32,37 @@ class App:
         if 'file' not in request.files:
             return jsonify({"message": "No file part"})
 
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({"message": "No selected file"})
+        files = request.files.getlist('file')
+        if not files:
+            return jsonify({"message": "No selected files"})
 
         output_directory = os.path.join("images")
 
         if not os.path.exists(output_directory):
             os.makedirs(output_directory)
 
-        file_path = os.path.join("images/"+file.filename)
-        file.save(file_path)
-        res_path = os.path.abspath("results.txt")
+        results = []
+        for file in files:
+            if file.filename == '':
+                results.append({"filename": "", "message": "No selected file"})
+                continue
 
-        try:
-            res = self.predict_image(file_path, conf=conf, save_path=res_path)
-            if res == 0:
-                return jsonify({"message": "Success", "code": 0})
-            elif res == 1:
-                return jsonify({"message": "No object detected",  "code": 1})
-            else:
-                return jsonify({"message": "Error", "code": 2})
-        except Exception as e:
-            return jsonify({"message": str(e)})
+            file_path = os.path.join(output_directory, file.filename)
+            file.save(file_path)
+            res_path = os.path.abspath(f"results_{file.filename}.txt")
+
+            try:
+                res = self.predict_image(file_path, conf=conf, save_path=res_path)
+                if res == 0:
+                    results.append({"filename": file.filename, "message": "Success", "code": 0})
+                elif res == 1:
+                    results.append({"filename": file.filename, "message": "No object detected", "code": 1})
+                else:
+                    results.append({"filename": file.filename, "message": "Error", "code": 2})
+            except Exception as e:
+                results.append({"filename": file.filename, "message": str(e), "code": 2})
+
+        return jsonify(results)
     
     def predict_image(self, image, conf=0.25, save_path="results.txt"):
         try:
@@ -94,4 +102,4 @@ class App:
             return f.read()
 
     def run(self):
-        serve(self.app, host='0.0.0.0', port=8080)  # Specify the host and port for waitress
+        serve(self.app, host='0.0.0.0', port=5001)  # Specify the host and port for waitress
